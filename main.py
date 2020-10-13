@@ -55,7 +55,6 @@ def list_groups(bot: telegram.Bot, update: telegram.Update, args):
 def create_group(bot: telegram.Bot, update: telegram.Update, args):
     message: telegram.Message = update.message
     user: telegram.User = message.from_user
-    user_id = user.id
     chat_id = message.chat_id
     if (len(args) < 1):
         bot.send_message(chat_id=chat_id,
@@ -67,7 +66,7 @@ def create_group(bot: telegram.Bot, update: telegram.Update, args):
     location = rds.get_location(chat_id)
     longitude = location[0]
     latitude = location[1]
-    create_res = rds.create_group(group, user_id, longitude, latitude)
+    create_res = rds.create_group(group, chat_id, longitude, latitude)
     if (create_res == 0):
         bot.send_message(chat_id=chat_id,
                          text='Create group error has occured! Sorry..')
@@ -100,8 +99,12 @@ def join_group(bot: telegram.Bot, update: telegram.Update, args):
         bot.send_message(chat_id=chat_id,
                          text='Group {} is already exists. ' +
                          'Please, choose other name for your new group'.format(group))
-    admins_ids = rds.get_admins_by(group)
-    notify.notify(admins_ids, group, user.id)
+    chat_ids = rds.get_chats_ids_by(group)
+    for chat in chat_ids:
+       print('sending join notification of {} to {}'.format(username, chat)) 
+       bot.send_message(chat_id=chat,
+                        text='User {} wants to join group {}'.format(username, group))
+    # notify.notify(admins_ids, group, user.id)
     bot.send_message(chat_id=chat_id,
                      text='We have notified admins of this group. They will add you soon ;)')
 

@@ -24,13 +24,13 @@ def search_location(longitude, latitude, radius):
 def check_group_exists(group):
     return execute_redis_cmd(group)
 
-def create_group(group, admin_id, longitude, latitude):
-    print('create: group={} admin_id={} longitude={} latitude={}'.format(group, admin_id, longitude, latitude))
+def create_group(group, chat_id, longitude, latitude):
+    print('create: group={} admin_id={} longitude={} latitude={}'.format(group, chat_id, longitude, latitude))
     # TODO: pipeline?
     geoadd_res = execute_redis_cmd('GEOADD geos {} {} {}'.format(longitude, latitude, group))
     if (geoadd_res == 0):
         return 0
-    rpush_res = execute_redis_cmd('RPUSH {} {}'.format(group, admin_id))
+    rpush_res = execute_redis_cmd('RPUSH {} {}'.format(group, chat_id))
     print('successfully created new group {}'.format(group))
     return rpush_res
 
@@ -41,7 +41,7 @@ def delete_group(group):
     zrem_res = execute_redis_cmd('ZREM {} {}'.format('geos', group))
     return zrem_res
 
-def get_admins_by(group):
+def get_chats_ids_by(group):
     return execute_redis_cmd('LRANGE {} 0 -1'.format(group))
 
 def add_admin(groupd, new_admin_id):
