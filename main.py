@@ -96,10 +96,10 @@ def join_group(bot: telegram.Bot, update: telegram.Update, args):
     username = user.username
     chat_id = message.chat_id
     group = args[0]
-    if (rds.check_group_exists(group)):
+    if (rds.check_group_exists(group) == 0):
         bot.send_message(chat_id=chat_id,
-                         text='Group {} is already exists. ' +
-                         'Please, choose other name for your new group'.format(group))
+                         text='Group {} is not exists. ' +
+                         'Please, choose other name for group to join'.format(group))
     chat_ids = rds.get_chats_ids_by(group)
     for chat in chat_ids:
        print('sending join notification of {} to {}'.format(username, chat)) 
@@ -120,6 +120,7 @@ def add_admin(bot: telegram.Bot, update: telegram.Update, args):
     access_token = args[2]
     txt = 'add yet another admin={} to group={}'.format(new_admin, group)
     print(txt)
+    rds.add_admin(group, new_admin)
     bot.send_message(chat_id=chat_id, text=txt)
 
 # required token

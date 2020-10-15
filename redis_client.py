@@ -4,20 +4,23 @@ import redis
 
 redis_client: redis.Redis = redis.Redis(host='localhost', port=6379, db=0)
 
-def set_location(key, longitude, latitude):
-    return execute_redis_cmd('SET {} {},{}'.format(key, longitude, latitude))
+CHAT_LOCATION_KEY = "location"
+GEOS_KEY = "geos"
 
-def get_location(key):
-    res = execute_redis_cmd('GET {}'.format(key))
+def set_location(chat_id, longitude, latitude):
+    return execute_redis_cmd('HSET {} {} {},{}'.format(CHAT_LOCATION_KEY, chat_id, longitude, latitude))
+
+def get_location(chat_id):
+    res = execute_redis_cmd('HGET {} {}'.format(CHAT_LOCATION_KEY, chat_id))
     location = res.decode('utf-8').split(',')
     if (len(location) < 2):
-        raise ValueError('Invalid format of location={} for key={}'.format(location, key))
+        raise ValueError('Invalid format of location={} for key={}'.format(location, chat_id))
     return location
 
 def search_location(longitude, latitude, radius):
     metric = 'm'
     print('search in radius {} {}: latitude={} longitude={}'.format(radius, metric, latitude, longitude))
-    resp = execute_redis_cmd('GEORADIUS geos {} {} {} {} WITHDIST'.format(longitude, latitude, radius, metric))
+    resp = execute_redis_cmd('GEORADIUS {} {} {} {} {} WITHDIST'.format(GEOS_KEY, longitude, latitude, radius, metric))
     # resp example: [[b'group3', b'306.7983'], [b'group4', b'354.9435']]
     return resp
 
@@ -26,26 +29,33 @@ def check_group_exists(group):
 
 def create_group(group, admin_id, chat_id, longitude, latitude):
     print('create: group={} admin_id={} chat_id={} longitude={} latitude={}'.format(group, admin_id, chat_id, longitude, latitude))
-    # TODO: pipeline?
-    geoadd_res = execute_redis_cmd('GEOADD geos {} {} {}'.format(longitude, latitude, group))
+    geoadd_res = execute_redis_cmd('GEOADD {} {} {} {}'.format(GEOS_KEY, longitude, latitude, group))
     if (geoadd_res == 0):
         return 0
-    hset_res = execute_redis_cmd('HSET {} {} {}'.format(group, admin_id, chat_id))
+    add_admin_res = execute_redis_cmd('RPUSH {}:admins {}'.format(group, admin_id))
+    add_chat_res = execute_redis_cmd('RPUSH {}:chats {}'.format(group, chat_id))
     print('successfully created group={} admin_id={} chat_id={}'.format(group, admin_id, chat_id))
-    return hset_res
+    return add_chat_res
 
 def delete_group(group):
-    del_res = execute_redis_cmd('DEL {}'.format(group))
-    if (del_res == 0):
+    del_admins_res = execute_redis_cmd('DEL {}:admins'.format(group))
+    del_chats_res = execute_redis_cmd('DEL {}:chats'.format(group))
+    if (del_location_res == 0 or del_chats_res == 0):
         return 0
-    zrem_res = execute_redis_cmd('ZREM {} {}'.format('geos', group))
-    return zrem_res
+    del_geos_res = execute_redis_cmd('HDEL {} {}'.format(GEOS_KEY, group))
+    return del_geos_res
 
 def get_chats_ids_by(group):
-    return execute_redis_cmd('LRANGE {} 0 -1'.format(group))
+    return execute_redis_cmd('LRANGE {}:chats 0 -1'.format(group))
 
-def add_admin(groupd, new_admin_id):
-    return execute_redis_cmd('RPUSH {} {}'.format(group, new_admin_id))
+def get_admins_ids_by(group):
+    return execute_redis_cmd('LRANGE {}:admins 0 -1'.format(group))
+
+def add_admin(group, new_admin_id):
+    return execute_redis_cmd('RPUSH {}:admins {}'.format(group, new_admin_id))
+
+def add_chat(group, new_chat_id):
+    return execute_redis_cmd('RPUSH {}:chats {}'.format(group, new_chat_id))
 
 def execute_redis_cmd(cmd):
     try:
