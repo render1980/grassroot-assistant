@@ -22,7 +22,7 @@ GET 1
 GEOADD geos 56.344222 37.520566 test_group  
 (integer) 1
 
-RPUSH test_group 123 
+HSET test_group admin_id 123
 ```
 
 ### Search groups within radius
@@ -36,5 +36,15 @@ GEORADIUS geos 56.346140 37.519993 500 m WITHDIST
 ### Get chat_ids for group
 
 ```
-LRANGE test_group 0 -1
+HVALS test_group
 ```
+
+### Get admins ids for group
+
+```
+HKEYS test_group
+```
+
+### TODO
+
+conflicts between entities 

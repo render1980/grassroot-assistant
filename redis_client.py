@@ -24,15 +24,15 @@ def search_location(longitude, latitude, radius):
 def check_group_exists(group):
     return execute_redis_cmd(group)
 
-def create_group(group, chat_id, longitude, latitude):
-    print('create: group={} admin_id={} longitude={} latitude={}'.format(group, chat_id, longitude, latitude))
+def create_group(group, admin_id, chat_id, longitude, latitude):
+    print('create: group={} admin_id={} chat_id={} longitude={} latitude={}'.format(group, admin_id, chat_id, longitude, latitude))
     # TODO: pipeline?
     geoadd_res = execute_redis_cmd('GEOADD geos {} {} {}'.format(longitude, latitude, group))
     if (geoadd_res == 0):
         return 0
-    rpush_res = execute_redis_cmd('RPUSH {} {}'.format(group, chat_id))
-    print('successfully created new group {}'.format(group))
-    return rpush_res
+    hset_res = execute_redis_cmd('HSET {} {} {}'.format(group, admin_id, chat_id))
+    print('successfully created group={} admin_id={} chat_id={}'.format(group, admin_id, chat_id))
+    return hset_res
 
 def delete_group(group):
     del_res = execute_redis_cmd('DEL {}'.format(group))

@@ -55,6 +55,7 @@ def list_groups(bot: telegram.Bot, update: telegram.Update, args):
 def create_group(bot: telegram.Bot, update: telegram.Update, args):
     message: telegram.Message = update.message
     user: telegram.User = message.from_user
+    admin_id = user.id
     chat_id = message.chat_id
     if (len(args) < 1):
         bot.send_message(chat_id=chat_id,
@@ -66,12 +67,12 @@ def create_group(bot: telegram.Bot, update: telegram.Update, args):
     location = rds.get_location(chat_id)
     longitude = location[0]
     latitude = location[1]
-    create_res = rds.create_group(group, chat_id, longitude, latitude)
+    create_res = rds.create_group(group, admin_id, chat_id, longitude, latitude)
     if (create_res == 0):
         bot.send_message(chat_id=chat_id,
                          text='Create group error has occured! Sorry..')
     bot.send_message(chat_id=chat_id,
-                     text='You created group={} for location: longitude={} latitude={}'.format(group, longitude, latitude))
+                     text='You have created group={} for location: longitude={} latitude={}'.format(group, longitude, latitude))
 
 def delete_group(group):
     message: telegram.Message = update.message
