@@ -1,0 +1,23 @@
+version: '2'
+services:
+  postgres:
+    build:
+      context: postgres
+      dockerfile: Dockerfile
+    container_name: postgres
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    restart: always
+    ports:
+    - "5432:5432"
+    volumes:
+    - $HOME/.docker/postgres/data:/usr/local/pgsql/data
+  redis:
+    restart: always
+    image: redis
+    ports:
+    - "6379:6379"
+    volumes:
+    - $HOME/.docker/redis/data:/data
