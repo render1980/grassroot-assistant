@@ -15,6 +15,7 @@ services:
     volumes:
     - $HOME/.docker/postgres/data:/usr/local/pgsql/data
   redis:
+    container_name: redis
     restart: always
     image: redis
     ports:

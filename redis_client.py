@@ -23,10 +23,10 @@ def get_location(chat_id):
 # ***************** #
 
 
-# `GEOADD geos 56.304558 38.135395 "group_name,admin_id"`
-def link_group(group, admin_id, longitude, latitude):
+# `GEOADD geos 56.304558 38.135395 "group_name:description of the group_name"`
+def link_group(group, desc, admin_id, longitude, latitude):
     print('create: group={} admin_id={} longitude={} latitude={}'.format(group, admin_id, longitude, latitude))
-    geoadd_res = execute_redis_cmd('GEOADD {} {} {} {}'.format(GEOS_KEY, longitude, latitude, group))
+    geoadd_res = execute_redis_cmd('GEOADD {} {} {} "{}:{}"'.format(GEOS_KEY, longitude, latitude, group, desc))
     if (geoadd_res < 1):
         return geoadd_res
     print('successfully created group={} admin_id={} longitude={} latitude={}'.format(group, admin_id, longitude, latitude))
@@ -34,11 +34,11 @@ def link_group(group, admin_id, longitude, latitude):
     return add_admin(group, admin_id)
 
 
-def search_groups_within_radius(longitude, latitude, radius):
+def search_groups_within_radius(longitude, latitude, radius=100):
     metric = 'm'
     print('search in radius {} {}: latitude={} longitude={}'.format(radius, metric, latitude, longitude))
     resp = execute_redis_cmd('GEORADIUS {} {} {} {} {} WITHDIST'.format(GEOS_KEY, longitude, latitude, radius, metric))
-    # resp example: [[b'group3,admin_id', b'306.7983'], [b'group4,admin_id', b'354.9435']]
+    # resp example: [[b'group3,desc', b'306.7983'], [b'group4,desc', b'354.9435']]
     return resp
 
 
