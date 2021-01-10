@@ -133,7 +133,11 @@ def delete_group_link(update: telegram.Update, ctx: CallbackContext):
     message: telegram.Message = update.message
     user: telegram.User = message.from_user
     admin_id = user.id
+    if len(args) < 1:
+        return message.reply_text('Please, define group and token')
     group_name = args[0]
+    if len(args) < 2:
+        return message.reply_text('Please, define token')
     access_token = args[1]
     db_del_res = db.delete_group(group_name, admin_id, access_token)
     if db_del_res < 1:
