@@ -24,38 +24,46 @@ def get_location(chat_id):
 
 
 # `GEOADD geos 56.304558 38.135395 "group_name:description of the group_name"`
-def link_group(group, desc, admin_id, longitude, latitude):
-    print('create: group={} admin_id={} longitude={} latitude={}'.format(group, admin_id, longitude, latitude))
-    geoadd_res = execute_redis_cmd('GEOADD {} {} {} "{}:{}"'.format(GEOS_KEY, longitude, latitude, group, desc))
-    if (geoadd_res < 1):
+def link_group(group_name, desc, admin_id, longitude, latitude):
+    print('create: group={} admin_id={} longitude={} latitude={}'.format(group_name, admin_id, longitude, latitude))
+    geoadd_res = execute_redis_cmd('GEOADD {} {} {} {}'.format(GEOS_KEY, longitude, latitude, group_name))
+    if geoadd_res < 1:
         return geoadd_res
-    print('successfully created group={} admin_id={} longitude={} latitude={}'.format(group, admin_id, longitude, latitude))
+    set_group_description(group_name, desc)
+    print('successfully created group={} admin_id={} longitude={} latitude={}'.format(group_name, admin_id, longitude, latitude))
     # TODO: add async writing -> pg
-    return add_admin(group, admin_id)
+    return add_admin(group_name, admin_id)
 
 
 def search_groups_within_radius(longitude, latitude, radius=100):
     metric = 'm'
     print('search in radius {} {}: latitude={} longitude={}'.format(radius, metric, latitude, longitude))
     resp = execute_redis_cmd('GEORADIUS {} {} {} {} {} WITHDIST'.format(GEOS_KEY, longitude, latitude, radius, metric))
-    # resp example: [[b'group3,desc', b'306.7983'], [b'group4,desc', b'354.9435']]
     return resp
 
 
-# def delete_group_link(group):
-    # del_admins_res = execute_redis_cmd('DEL {}:admins'.format(group))
-    # if (del_location_res == 0 or del_chats_res == 0):
-        # return 0
-    # del_geos_res = execute_redis_cmd('HDEL {} {}'.format(GEOS_KEY, group))
-    # del from pg
-    # return del_geos_res
+def delete_group_link(group):
+    del_admins_res = execute_redis_cmd('DEL {}:admins'.format(group))
+    if del_admins_res == 0:
+        return 0
+    del_geos_res = execute_redis_cmd('DEL {} {}'.format(GEOS_KEY, group))
+    return del_geos_res
 
 
 def get_admins_ids_by(group):
     return execute_redis_cmd('LRANGE {}:admins 0 -1'.format(group))
 
+
 def add_admin(group, admin_id):
     return execute_redis_cmd('RPUSH {}:admins {}'.format(group, admin_id))
+
+
+def set_group_description(group_name, desc):
+    return execute_redis_cmd('SET {} {}'.format(group_name, desc))
+
+
+def get_description(group_name):
+    return execute_redis_cmd('GET {}'.format(group_name))
 
 
 def execute_redis_cmd(cmd):

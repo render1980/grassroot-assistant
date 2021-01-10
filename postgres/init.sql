@@ -15,6 +15,7 @@ create table if not exists grassroot.group_admins (
     id serial PRIMARY KEY,
     admin_id bigint,
     group_id bigint,
+    group_name varchar(256),
     token varchar(256),
     CONSTRAINT fk_group
         FOREIGN KEY(group_id)
