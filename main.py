@@ -26,7 +26,7 @@ def process_location(update: telegram.Update, ctx: CallbackContext):
         return message.reply_text('Saving location error! Sorry..')
     message.reply_text('Good, now you can use next commands:\n\n' +
                      '/list {search_radius} - show groups within your location radius (meters). 100m by default.\n' +
-                     '/link {group_name} {description} - link a group to your location\n' +
+                     '/link {group_name} {description} - link a group to your location.\n' +
                      '/join {group_name} - request to join the group')
 
 
@@ -66,7 +66,12 @@ def link_group(update: telegram.Update, ctx: CallbackContext):
     if (len(args) < 1):
         return message.reply_text('Invalid arguments number={} but required={}'.format(len(args), 1))
     group = args[0]
-    description = args[1]
+    args_len = len(args)
+    description = ''
+    if args_len > 1:
+        for i in range(1, args_len):
+            description = '{} {}'.format(description, args[i])
+    description = description.replace(' ', '%')
     location = rds.get_location(admin_id)
     longitude = location[0]
     latitude = location[1]
