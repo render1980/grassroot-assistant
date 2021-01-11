@@ -5,10 +5,11 @@ Bot which helps to communicate with others nearby over Telegram
 ## Telegram Bot Commands
 
 ```
-/start
-/list {search_radius} - search groups within your location radius
-/link {group_name} - link a group to your location
-/join {group_name} - request for joining to the group
+/start - start communicating with Bot
+/list {radius} - list groups within your location radius (meters). 100m by default.
+/link {group} {description} - link a group to your location
+/join {group} - request to join the group
+/delete_link {group} {token} - delete the link for Bot
 ```
 
 ## Redis commands
@@ -18,10 +19,10 @@ Bot which helps to communicate with others nearby over Telegram
 *Location*
 
 ```
-HSET location chat_id 56.346140,37.519993
+HSET location {chat_id} 56.346140,37.519993
 OK
 
-HGET location chat_id
+HGET location {chat_id}
 "56.346140,37.519993"
 ```
 
@@ -47,3 +48,19 @@ GEORADIUS geos 56.346140 37.519993 500 m WITHDIST
 ```
 LRANGE test_group:admins 0 -1
 ```
+
+### Set group description
+
+```
+SET test_group description
+```
+
+### Get group description
+
+```
+GET test_group
+```
+
+## Pg scheme
+
+`cat postgres/init.sql`
