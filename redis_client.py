@@ -42,7 +42,11 @@ def search_groups_within_radius(longitude, latitude, radius=100):
     return resp
 
 
-def delete_group_link(group):
+def delete_group_link(group, admin_id):
+    admins_ids = get_admins_ids_by(group)
+    if (admin_id not in admins_ids):
+        print('Cant delete group={} by user={}: He is not an admin of the group!'.format(group, admin_id))
+        return 0
     del_admins_res = execute_redis_cmd('DEL {}:admins'.format(group))
     if del_admins_res == 0:
         return 0

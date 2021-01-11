@@ -84,11 +84,11 @@ def link_group(update: telegram.Update, ctx: CallbackContext):
         return message.reply_text('Group {} is already exists!'.format(group))
     # persist -> DB
     # TODO: we should do it asynchronously
-    res = db.insert_group(group, description, admin_id, longitude, latitude, token)
-    if res < 1:
-        return message.reply_text('There is a problem with saving the group={} for the location: longitude={} latitude={}'.format(group, longitude, latitude))
-    else:
-        return message.reply_text('You have linked the group `{}` to the location: longitude={} latitude={}\n\nUse token=`{}` to manage the group.'.format(group, longitude, latitude, token))
+#     res = db.insert_group(group, description, admin_id, longitude, latitude, token)
+    # if res < 1:
+        # return message.reply_text('There is a problem with saving the group={} for the location: longitude={} latitude={}'.format(group, longitude, latitude))
+    # else:
+    return message.reply_text('You have linked the group `{}` to the location: longitude={} latitude={}\n\nUse token=`{}` to manage the group.'.format(group, longitude, latitude, token))
 
 
 def join_group(update: telegram.Update, ctx: CallbackContext):
@@ -140,10 +140,10 @@ def delete_group_link(update: telegram.Update, ctx: CallbackContext):
     if len(args) < 2:
         return message.reply_text('Please, define token')
     access_token = args[1]
-    db_del_res = db.delete_group(group_name, admin_id, access_token)
-    if db_del_res < 1:
-        return message.reply_text('Problems with deleting group={} from DB'.format(group_name))
-    rds_del_res = rds.delete_group_link(group_name)
+#     db_del_res = db.delete_group(group_name, admin_id, access_token)
+    # if db_del_res < 1:
+        # return message.reply_text('Problems with deleting group={} from DB'.format(group_name))
+    rds_del_res = rds.delete_group_link(group_name, admin_id)
     if rds_del_res < 1:
         return message.reply_text('Problems with deleting group={} from cache'.format(group_name))
     return message.reply_text('Group={} is deleted.'.format(group_name))
