@@ -1,6 +1,10 @@
 import psycopg2 as pg
+import os
 
-conn = pg.connect("dbname=postgres user=postgres password=postgres host=0.0.0.0")
+postgres_db = os.getenv('POSTGRES_DB', 'postgres')
+postgres_user = os.getenv('POSTGRES_USER', 'postgres')
+postgres_password = os.getenv('POSTGRES_PASSWORD', 'postgres')
+conn = pg.connect("dbname={} user={} password={} host=0.0.0.0".format(postgres_db, postgres_user, postgres_password))
 
 def insert_group(group_name, desc, admin_id, longitude, latitude, token):
     print('Saving group={} admin_id={} longitude={} latitude={} token={} -> DB'.format(group_name, admin_id, longitude, latitude, token))

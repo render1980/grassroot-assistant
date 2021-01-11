@@ -1,4 +1,5 @@
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+import os
 import telegram
 import re
 import redis_client as rds
@@ -24,9 +25,10 @@ def process_location(update: telegram.Update, ctx: CallbackContext):
     if cmd_res < 0:
         return message.reply_text('Saving location error! Sorry..')
     message.reply_text('Good, now you can use next commands:\n\n' +
-                     '/list {search_radius} - show groups within your location radius (meters). 100m by default.\n' +
-                     '/link {group_name} {description} - link a group to your location.\n' +
-                     '/join {group_name} - request to join the group')
+                     '/list {radius} - show groups within your location radius (meters). 100m by default.\n' +
+                     '/link {group} {description} - link a group to your location.\n' +
+                     '/join {group} - request to join the group\n' +
+                     '/delete_link {group} {token} - delete the link for Bot')
 
 
 def list_groups(update: telegram.Update, ctx: CallbackContext):
@@ -94,7 +96,6 @@ def join_group(update: telegram.Update, ctx: CallbackContext):
     message: telegram.Message = update.message
     user: telegram.User = message.from_user
     username = user.username
-    # chat_id = message.chat_id
     group = args[0]
     admins_ids = rds.get_admins_ids_by(group)
     for admin_id in admins_ids:
@@ -160,8 +161,8 @@ def prepare_cash():
 
 
 def main():
-    # TODO: token -> to cmd line parameter
-    updater = Updater('1237001342:AAE5sqITadSxeE06Xxcp8iPQz6AMCnRxN7Y')
+    bot_token = os.getenv('BOT_TOKEN')
+    updater = Updater(bot_token)
     dp = updater.dispatcher
     dp.add_handler(CommandHandler('start', start))
     dp.add_handler(MessageHandler(Filters.location, process_location))
@@ -176,5 +177,4 @@ def main():
 
 
 if __name__ == '__main__':
-    # pdb.set_trace()
     main()

@@ -3,19 +3,19 @@ create schema if not exists grassroot authorization grassroot;
 
 create table if not exists grassroot.groups (
     id serial PRIMARY KEY,
-    group_name varchar(256),
+    group_name varchar(256) NOT NULL,
     description text,
-    creator_id bigint,
-    longitude double precision,
-    latitude double precision,
+    creator_id bigint NOT NULL,
+    longitude double precision NOT NULL,
+    latitude double precision NOT NULL,
     creation_date timestamp NOT NULL
 );
 
 create table if not exists grassroot.group_admins (
     id serial PRIMARY KEY,
-    admin_id bigint,
-    group_id bigint,
-    group_name varchar(256),
+    admin_id bigint NOT NULL,
+    group_id bigint NOT NULL,
+    group_name varchar(256) NOT NULL,
     token varchar(256),
     CONSTRAINT fk_group
         FOREIGN KEY(group_id)
