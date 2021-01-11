@@ -1,6 +1,6 @@
 import redis
 
-redis_client: redis.Redis = redis.Redis(host='localhost', port=6379, db=0)
+redis_client: redis.Redis = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
 
 CHAT_LOCATION_KEY = "location"
 GEOS_KEY = "geos"
@@ -15,7 +15,7 @@ def set_location(chat_id, longitude, latitude):
 
 def get_location(chat_id):
     res = execute_redis_cmd('HGET {} {}'.format(CHAT_LOCATION_KEY, chat_id))
-    location = res.decode('utf-8').split(',')
+    location = res.split(',')
     if (len(location) < 2):
         raise ValueError('Invalid format of location={} for key={}'.format(location, chat_id))
     return location
@@ -44,7 +44,8 @@ def search_groups_within_radius(longitude, latitude, radius=100):
 
 def delete_group_link(group, admin_id):
     admins_ids = get_admins_ids_by(group)
-    if (admin_id not in admins_ids):
+    print('group={} admins: {}'.format(group, admins_ids))
+    if (str(admin_id) not in admins_ids):
         print('Cant delete group={} by user={}: He is not an admin of the group!'.format(group, admin_id))
         return 0
     del_admins_res = execute_redis_cmd('DEL {}:admins'.format(group))

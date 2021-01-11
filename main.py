@@ -28,7 +28,7 @@ def process_location(update: telegram.Update, ctx: CallbackContext):
                      '/list {radius} - show groups within your location radius (meters). 100m by default.\n' +
                      '/link {group} {description} - link a group to your location.\n' +
                      '/join {group} - request to join the group\n' +
-                     '/delete_link {group} {token} - delete the link for Bot')
+                     '/delete_link {group} - delete the link for Bot')
 
 
 def list_groups(update: telegram.Update, ctx: CallbackContext):
@@ -51,9 +51,9 @@ def list_groups(update: telegram.Update, ctx: CallbackContext):
     print('groups in radius {} : {}'.format(radius, groups_in_radius))
     list_groups_str = 'Groups within your location radius ({}m):\n\nname,distance,description'.format(radius)
     for g in groups_in_radius:
-        radius = g[1].decode('utf-8')
-        group_name = g[0].decode('utf-8')
-        group_desc = rds.get_description(group_name).decode('utf-8')
+        radius = g[1]
+        group_name = g[0]
+        group_desc = rds.get_description(group_name)
         list_groups_str = '{}\n{},{},{}'.format(list_groups_str, group_name, radius, group_desc)
     return message.reply_text(list_groups_str)
 
@@ -82,13 +82,7 @@ def link_group(update: telegram.Update, ctx: CallbackContext):
         return message.reply_text('Creating group error has occured! Sorry..')
     if link_res == 0:
         return message.reply_text('Group {} is already exists!'.format(group))
-    # persist -> DB
-    # TODO: we should do it asynchronously
-#     res = db.insert_group(group, description, admin_id, longitude, latitude, token)
-    # if res < 1:
-        # return message.reply_text('There is a problem with saving the group={} for the location: longitude={} latitude={}'.format(group, longitude, latitude))
-    # else:
-    return message.reply_text('You have linked the group `{}` to the location: longitude={} latitude={}\n\nUse token=`{}` to manage the group.'.format(group, longitude, latitude, token))
+    return message.reply_text('You have linked the group `{}` to the location: longitude={} latitude={}'.format(group, longitude, latitude))
 
 
 def join_group(update: telegram.Update, ctx: CallbackContext):
@@ -128,21 +122,14 @@ def join_group(update: telegram.Update, ctx: CallbackContext):
     # access_token = args[2]
     # check_token
 
-# required token
 def delete_group_link(update: telegram.Update, ctx: CallbackContext):
     args = ctx.args
     message: telegram.Message = update.message
     user: telegram.User = message.from_user
     admin_id = user.id
     if len(args) < 1:
-        return message.reply_text('Please, define group and token')
+        return message.reply_text('Please, define group')
     group_name = args[0]
-    if len(args) < 2:
-        return message.reply_text('Please, define token')
-    access_token = args[1]
-#     db_del_res = db.delete_group(group_name, admin_id, access_token)
-    # if db_del_res < 1:
-        # return message.reply_text('Problems with deleting group={} from DB'.format(group_name))
     rds_del_res = rds.delete_group_link(group_name, admin_id)
     if rds_del_res < 1:
         return message.reply_text('Problems with deleting group={} from cache'.format(group_name))
@@ -154,6 +141,7 @@ def generate_token(group, admin_id):
     uid = uuid.uuid4()
     hash = hashlib.sha256('{}:{}:{}'.format(group, admin_id, uid).encode('utf-8'))
     return hash.hexdigest()
+
 
 def prepare_cash():
     # TODO: updating from db to redis logic
