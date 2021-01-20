@@ -2,7 +2,9 @@
 
 # grassroot-assistant
 
-Bot which helps to communicate with others nearby over Telegram
+Bot which helps to communicate with others nearby over Telegram.
+
+How it works: https://render1980.github.io/projects/grassrootassistant.html
 
 ## Telegram Bot Commands
 
