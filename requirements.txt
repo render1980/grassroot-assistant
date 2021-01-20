@@ -1,5 +1,5 @@
 jedi-language-server
 python-telegram-bot
 redis
-psycopg2
-psycopg2-binary
+black
+pytest
