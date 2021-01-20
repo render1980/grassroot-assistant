@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/render1980/grassroot-assistant.svg?branch=main)](https://travis-ci.org/render1980/grassroot-assistant)
+
 # grassroot-assistant
 
 Bot which helps to communicate with others nearby over Telegram
