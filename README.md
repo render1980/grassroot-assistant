@@ -6,6 +6,27 @@ Bot which helps to communicate with others nearby over Telegram.
 
 How it works: https://render1980.github.io/projects/grassrootassistant.html
 
+## Requirements
+
+Preinstalled:
+* pyenv
+* docker-compose
+* pip
+
+Run:
+
+```
+pyenv install 3.7.5 && pyenv global 3.7.5
+docker-compose up -d --build --force-recreate redis
+pip install -r requirements.txt
+```
+
+## Run
+
+```
+python main.py
+```
+
 ## Telegram Bot Commands
 
 ```
