@@ -21,7 +21,7 @@ docker-compose up -d --build --force-recreate redis
 pip install -r requirements.txt
 ```
 
-## Run
+## Start
 
 ```
 python main.py
