@@ -4,6 +4,7 @@ redis_client: redis.Redis = redis.Redis(host='localhost', port=6379, db=0, decod
 
 CHAT_LOCATION_KEY = "location"
 GEOS_KEY = "geos"
+DESCRIPTION_KEY = "desc"
 
 
 # ***************** #
@@ -31,7 +32,6 @@ def link_group(group_name, desc, admin_id, longitude, latitude):
         return geoadd_res
     set_group_description(group_name, desc)
     print('successfully created group={} admin_id={} longitude={} latitude={}'.format(group_name, admin_id, longitude, latitude))
-    # TODO: add async writing -> pg
     return add_admin(group_name, admin_id)
 
 
@@ -64,11 +64,11 @@ def add_admin(group, admin_id):
 
 
 def set_group_description(group_name, desc):
-    return execute_redis_cmd('SET {} {}'.format(group_name, desc))
+    return execute_redis_cmd('HSET {} {} {}'.format(DESCRIPTION_KEY, group_name, desc))
 
 
 def get_description(group_name):
-    return execute_redis_cmd('GET {}'.format(group_name))
+    return execute_redis_cmd('HGET {} {}'.format(DESCRIPTION_KEY, group_name))
 
 
 def execute_redis_cmd(cmd):
