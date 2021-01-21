@@ -22,24 +22,29 @@ def process_location(update: telegram.Update, ctx: CallbackContext):
     user: telegram.User = message.from_user
     longitude = message.location.latitude
     latitude = message.location.longitude
+    msg = location(chat_id, user, longitude, latitude)
+    return message.reply_text(msg)
+
+
+def location(chat_id, user, longitude, latitude):
     print(
-        "process_location: user={} latitude={} longitude={}".format(
-            user, latitude, longitude
+        "process_location: user={} chat_id={} latitude={} longitude={}".format(
+            user, chat_id, latitude, longitude
         )
     )
     cmd_res = rds.set_location(chat_id, longitude, latitude)
     if cmd_res < 0:
-        return message.reply_text("Saving location error! Sorry..")
-    return message.reply_text(
-        'Good, now you can use next commands:\n\n'
-        + '/list {radius} - show groups within your location radius (meters). 100m by default.\n'
-        + '/link {group} {description} - link a group to your location.\n'
-        + '/join {group} - request to join the group\n'
-        + '/delete_link {group} - delete the link for Bot'
+        return "Saving location error! Sorry.."
+    return (
+        "Good, now you can use next commands:\n\n"
+        + "/list {radius} - show groups within your location radius (meters). 100m by default.\n"
+        + "/link {group} {description} - link a group to your location.\n"
+        + "/join {group} - request to join the group\n"
+        + "/delete_link {group} - delete the link for Bot"
     )
 
 
-def list_groups(update: telegram.Update, ctx: CallbackContext):
+def process_list_groups(update: telegram.Update, ctx: CallbackContext):
     args = ctx.args
     message: telegram.Message = update.message
     print("call list with args: {}".format(args))
@@ -60,9 +65,7 @@ def list_groups(update: telegram.Update, ctx: CallbackContext):
         return message.reply_text("Search groups error! Sorry..")
     print("groups in radius {} : {}".format(radius, groups_in_radius))
     list_groups_str = (
-        "Groups within your location radius ({}m):\n\nname,distance,description".format(
-            radius
-        )
+        "Groups within your location radius ({}m):\n\nname,distance,description".format(radius)
     )
     for g in groups_in_radius:
         radius = g[1]
@@ -171,7 +174,7 @@ def main():
     dp = updater.dispatcher
     dp.add_handler(CommandHandler("start", start))
     dp.add_handler(MessageHandler(Filters.location, process_location))
-    dp.add_handler(CommandHandler("list", list_groups, pass_args=True))
+    dp.add_handler(CommandHandler("list", process_list_groups, pass_args=True))
     dp.add_handler(CommandHandler("link", link_group, pass_args=True))
     dp.add_handler(CommandHandler("join", join_group, pass_args=True))
     dp.add_handler(CommandHandler("delete_link", delete_group_link, pass_args=True))
