@@ -5,11 +5,10 @@ from telegram.ext import (
     CommandHandler,
     MessageHandler,
     Filters,
-    CallbackContext,
 )
-from main import process_location, location
+from main import process_location, location, process_list_groups, list_groups
 
-## Location
+# Location
 
 def test_process_location(mocker):
     mocker.patch("redis_client.set_location", return_value=1)
@@ -40,6 +39,7 @@ def test_process_1(mocker):
 
     msg = location(chat_id, user, longitude, latitude)
     print("location message => \n{}\n".format(msg))
+    assert msg is not None
 
 
 def test_process_0(mocker):
@@ -52,7 +52,7 @@ def test_process_0(mocker):
 
     msg = location(chat_id, user, longitude, latitude)
     print("location message => \n{}\n".format(msg))
-    assert not msg.__contains__("error")
+    assert not msg.__contains__("Error")
 
 
 def test_process_negative(mocker):
@@ -65,10 +65,11 @@ def test_process_negative(mocker):
 
     msg = location(chat_id, user, longitude, latitude)
     print("location message => \n{}\n".format(msg))
-    assert msg.__contains__("error")
+    assert msg.__contains__("Error")
 
 
-## List Groups
+# List Groups
+
 
 def test_list_groups(mocker):
     mocker.patch("redis_client.get_location", return_value=[56.311527, 38.135115])
@@ -78,4 +79,70 @@ def test_list_groups(mocker):
     )
     mocker.patch("redis_client.get_description", return_value="cool group")
 
+    chat_id = 456
+    radius = 100
+    resp = list_groups(chat_id=chat_id, radius=radius)
 
+    print("\ntest_list_groups response => {}\n".format(resp))
+    assert resp.__contains__("group1")
+    assert resp.__contains__("group2")
+    assert not resp.__contains__("group3")
+
+
+def test_list_when_groups_get_location_0(mocker):
+    mocker.patch("redis_client.get_location", return_value=0)
+    mocker.patch(
+        "redis_client.search_groups_within_radius",
+        return_value=[[100, "group1"], [200, "group2"]],
+    )
+    mocker.patch("redis_client.get_description", return_value="cool group")
+
+    chat_id = 456
+    radius = 100
+    resp = list_groups(chat_id=chat_id, radius=radius)
+
+    print("\ntest_list_groups response => {}\n".format(resp))
+    assert resp.__contains__("Error")
+    assert not resp.__contains__("group1")
+    assert not resp.__contains__("group2")
+
+
+def test_list_when_groups_search_groups_within_radius_0(mocker):
+    mocker.patch(
+        "redis_client.get_location", return_value=[56.311527, 38.135115]
+    )
+    mocker.patch(
+        "redis_client.search_groups_within_radius",
+        return_value=0,
+    )
+    mocker.patch("redis_client.get_description", return_value="cool group")
+
+    chat_id = 456
+    radius = 100
+    resp = list_groups(chat_id=chat_id, radius=radius)
+
+    print("\ntest_list_groups response => {}\n".format(resp))
+    assert resp.__contains__("Error")
+    assert not resp.__contains__("group1")
+    assert not resp.__contains__("group2")
+
+
+# Link group
+
+def test_link_group(mocker):
+    mocker.patch("redis_client.get_location", return_value=[56.311527, 38.135115])
+    mocker.patch("redis_client.link_group", return_value=1)
+
+
+def test_link_group_when_no_location_found(mocker):
+    mocker.patch("redis_client.get_location", return_value=None)
+    mocker.patch("redis_client.link_group", return_value=1)
+
+
+def test_link_group_when_error_has_occured(mocker):
+    mocker.patch("redis_client.get_location", return_value=[56.311527, 38.135115])
+    mocker.patch("redis_client.link_group", return_value=-1)
+
+def test_link_group_when_group_already_exists(mocker):
+    mocker.patch("redis_client.get_location", return_value=[56.311527, 38.135115])
+    mocker.patch("redis_client.link_group", return_value=0)
