@@ -9,9 +9,10 @@ How it works: https://render1980.github.io/projects/grassrootassistant.html
 ## Requirements
 
 Preinstalled:
-* pyenv
-* docker-compose
-* pip
+
+- pyenv
+- docker-compose
+- pip
 
 Run:
 
@@ -25,6 +26,13 @@ pip install -r requirements.txt
 
 ```
 python main.py
+```
+
+## Build
+
+```
+python setup.py build
+python setup.py sdist
 ```
 
 ## Telegram Bot Commands
