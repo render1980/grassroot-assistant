@@ -10,6 +10,7 @@ from main import process_location, location, process_list_groups, list_groups
 
 # Location
 
+
 def test_process_location(mocker):
     mocker.patch("redis_client.set_location", return_value=1)
     mocker.patch("telegram.Message.reply_text", return_value="Hello World")
@@ -33,11 +34,10 @@ def test_process_1(mocker):
     mocker.patch("redis_client.set_location", return_value=1)
 
     chat_id = 123
-    user = telegram.User(666, "test_user", False)
-    longitude = "56.311527"
-    latitude = "38.135115"
+    longitude = 56.311527
+    latitude = 38.135115
 
-    msg = location(chat_id, user, longitude, latitude)
+    msg = location(chat_id, longitude, latitude)
     print("location message => \n{}\n".format(msg))
     assert msg is not None
 
@@ -46,11 +46,10 @@ def test_process_0(mocker):
     mocker.patch("redis_client.set_location", return_value=0)
 
     chat_id = 123
-    user = telegram.User(666, "test_user", False)
-    longitude = "56.311527"
-    latitude = "38.135115"
+    longitude = 56.311527
+    latitude = 38.135115
 
-    msg = location(chat_id, user, longitude, latitude)
+    msg = location(chat_id, longitude, latitude)
     print("location message => \n{}\n".format(msg))
     assert not msg.__contains__("Error")
 
@@ -59,11 +58,10 @@ def test_process_negative(mocker):
     mocker.patch("redis_client.set_location", return_value=-1)
 
     chat_id = 123
-    user = telegram.User(666, "test_user", False)
-    longitude = "56.311527"
-    latitude = "38.135115"
+    longitude = 56.311527
+    latitude = 38.135115
 
-    msg = location(chat_id, user, longitude, latitude)
+    msg = location(chat_id, longitude, latitude)
     print("location message => \n{}\n".format(msg))
     assert msg.__contains__("Error")
 
@@ -72,7 +70,8 @@ def test_process_negative(mocker):
 
 
 def test_list_groups(mocker):
-    mocker.patch("redis_client.get_location", return_value=[56.311527, 38.135115])
+    mocker.patch("redis_client.get_location",
+                 return_value=[56.311527, 38.135115])
     mocker.patch(
         "redis_client.search_groups_within_radius",
         return_value=[[100, "group1"], [200, "group2"]],
@@ -130,7 +129,8 @@ def test_list_when_groups_search_groups_within_radius_0(mocker):
 # Link group
 
 def test_link_group(mocker):
-    mocker.patch("redis_client.get_location", return_value=[56.311527, 38.135115])
+    mocker.patch("redis_client.get_location",
+                 return_value=[56.311527, 38.135115])
     mocker.patch("redis_client.link_group", return_value=1)
 
 
@@ -140,9 +140,12 @@ def test_link_group_when_no_location_found(mocker):
 
 
 def test_link_group_when_error_has_occured(mocker):
-    mocker.patch("redis_client.get_location", return_value=[56.311527, 38.135115])
+    mocker.patch("redis_client.get_location",
+                 return_value=[56.311527, 38.135115])
     mocker.patch("redis_client.link_group", return_value=-1)
 
+
 def test_link_group_when_group_already_exists(mocker):
-    mocker.patch("redis_client.get_location", return_value=[56.311527, 38.135115])
+    mocker.patch("redis_client.get_location",
+                 return_value=[56.311527, 38.135115])
     mocker.patch("redis_client.link_group", return_value=0)
