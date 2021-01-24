@@ -1,4 +1,6 @@
 [![Build Status](https://travis-ci.org/render1980/grassroot-assistant.svg?branch=main)](https://travis-ci.org/render1980/grassroot-assistant)
+[![Version](https://img.shields.io/badge/version-1.0-green.svg)](https://img.shields.io/badge/version-1.0-green.svg)
+[![Coverage Status](https://coveralls.io/repos/github/render1980/grassroot-assistant/badge.svg?branch=main)](https://coveralls.io/github/render1980/grassroot-assistant?branch=main)
 
 # grassroot-assistant
 
