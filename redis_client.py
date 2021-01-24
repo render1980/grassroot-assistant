@@ -1,24 +1,33 @@
 import redis
+import logging
+import logging.config
 
-redis_client: redis.Redis = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+redis_client: redis.Redis = redis.Redis(
+    host='localhost', port=6379, db=0, decode_responses=True)
 
 CHAT_LOCATION_KEY = "location"
 GEOS_KEY = "geos"
 DESCRIPTION_KEY = "desc"
 
+logging.config.fileConfig('logging.conf')
+log = logging.getLogger('grassroot')
 
 # ***************** #
 # Current location  #
 # ***************** #
+
+
 def set_location(chat_id, longitude, latitude):
-    return execute_redis_cmd('HSET {} {} {},{}'.format(CHAT_LOCATION_KEY, chat_id, longitude, latitude))
+    return execute_redis_cmd(chat_id, 'HSET {} {} {},{}'.format(CHAT_LOCATION_KEY, chat_id, longitude, latitude))
 
 
 def get_location(chat_id):
-    res = execute_redis_cmd('HGET {} {}'.format(CHAT_LOCATION_KEY, chat_id))
+    res = execute_redis_cmd(
+        chat_id, 'HGET {} {}'.format(CHAT_LOCATION_KEY, chat_id))
     location = res.split(',')
     if (len(location) < 2):
-        raise ValueError('Invalid format of location={} for key={}'.format(location, chat_id))
+        raise ValueError(
+            'Invalid format of location={} for key={}'.format(location, chat_id))
     return location
 
 # ***************** #
@@ -26,67 +35,61 @@ def get_location(chat_id):
 
 # `GEOADD geos 56.304558 38.135395 "group_name:description of the group_name"`
 def link_group(group_name, desc, admin_id, longitude, latitude):
-    print('create: group={} admin_id={} longitude={} latitude={}'.format(group_name, admin_id, longitude, latitude))
-    geoadd_res = execute_redis_cmd('GEOADD {} {} {} {}'.format(GEOS_KEY, longitude, latitude, group_name))
+    geoadd_res = execute_redis_cmd(admin_id, 'GEOADD {} {} {} {}'.format(
+        GEOS_KEY, longitude, latitude, group_name))
     if geoadd_res < 1:
         return geoadd_res
-    set_group_description(group_name, desc)
-    print('successfully created group={} admin_id={} longitude={} latitude={}'.format(group_name, admin_id, longitude, latitude))
-    return add_admin(group_name, admin_id)
+    set_group_description(admin_id, group_name, desc)
+    log.info('[id=%d] successfully created group=%s admin_id=%d longitude=%f latitude=%f'.format(
+        admin_id, group_name, admin_id, longitude, latitude))
+    return add_admin(admin_id, group_name)
 
 
-def search_groups_within_radius(longitude, latitude, radius=100):
+def search_groups_within_radius(chat_id, longitude, latitude, radius=100):
     metric = 'm'
-    print('search in radius {} {}: latitude={} longitude={}'.format(radius, metric, latitude, longitude))
-    resp = execute_redis_cmd('GEORADIUS {} {} {} {} {} WITHDIST'.format(GEOS_KEY, longitude, latitude, radius, metric))
+    resp = execute_redis_cmd(chat_id, 'GEORADIUS {} {} {} {} {} WITHDIST'.format(
+        GEOS_KEY, longitude, latitude, radius, metric))
     return resp
 
 
 def delete_group_link(group, admin_id):
-    admins_ids = get_admins_ids_by(group)
-    print('group={} admins: {}'.format(group, admins_ids))
+    admins_ids = get_admins_ids_by(admin_id, group)
+    log.info('[id=%d] delete_group_link(group=%s admin_id=%d) admins: %s',
+             admin_id, group, admin_id, admins_ids)
     if (str(admin_id) not in admins_ids):
-        print('Cant delete group={} by user={}: He is not an admin of the group!'.format(group, admin_id))
+        log.warning('[id=%d] Cant delete group=%s by user=%d: He is not an admin of the group!',
+                    admin_id, group, admin_id)
         return 0
-    del_admins_res = execute_redis_cmd('DEL {}:admins'.format(group))
+    del_admins_res = execute_redis_cmd(admin_id, 'DEL {}:admins'.format(group))
     if del_admins_res == 0:
         return 0
-    del_geos_res = execute_redis_cmd('DEL {} {}'.format(GEOS_KEY, group))
+    del_geos_res = execute_redis_cmd(
+        admin_id, 'ZREM {} {}'.format(GEOS_KEY, group))
     return del_geos_res
 
 
-def get_admins_ids_by(group):
-    return execute_redis_cmd('LRANGE {}:admins 0 -1'.format(group))
+def get_admins_ids_by(chat_id, group):
+    return execute_redis_cmd(chat_id, 'SMEMBERS {}:admins'.format(group))
 
 
-def add_admin(group, admin_id):
-    return execute_redis_cmd('RPUSH {}:admins {}'.format(group, admin_id))
+def add_admin(admin_id, group):
+    return execute_redis_cmd(admin_id, 'SADD {}:admins {}'.format(group, admin_id))
 
 
-def set_group_description(group_name, desc):
-    return execute_redis_cmd('HSET {} {} {}'.format(DESCRIPTION_KEY, group_name, desc))
+def set_group_description(admin_id, group_name, desc):
+    return execute_redis_cmd(admin_id, 'HSET {} {} {}'.format(DESCRIPTION_KEY, group_name, desc))
 
 
-def get_description(group_name):
-    return execute_redis_cmd('HGET {} {}'.format(DESCRIPTION_KEY, group_name))
+def get_description(admin_id, group_name):
+    return execute_redis_cmd(admin_id, 'HGET {} {}'.format(DESCRIPTION_KEY, group_name))
 
 
-def execute_redis_cmd(cmd):
-    """ Responses: 1 - ok, 0 - already exists, -1 - error """
+def execute_redis_cmd(admin_id, cmd):
+    """ Redis responses: 1 - ok, 0 - already exists, -1 - error """
     try:
-        print('execute redis cmd: ', cmd)
         res = redis_client.execute_command(cmd)
-        print('cmd: `{}` res: `{}`'.format(cmd, res))
+        log.info('[id=%d] redis cmd: `%s` res: `%s`', admin_id, cmd, res)
         return res
     except redis.exceptions.ResponseError as err:
-        print('Cmd: `{}` Exception: `{}`'.format(cmd, err))
+        log.error('[id=%d] cmd: `%s` Exception: `%s`', admin_id, cmd, err)
         return -1
-
-
-if __name__ == '__main__':
-    search(58.524634, 31.286504, b'800')
-    # get('user1')
-#     create('group1', 11, 58.520158, 31.285259)
-    # create('group2', 12, 58.519665, 31.284938)
-    # create('group3', 13, 58.521433, 31.286161)
-    # create('group4', 14, 58.521191, 31.287738)

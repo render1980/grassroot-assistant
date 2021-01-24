@@ -8,8 +8,13 @@ from telegram.ext import (
 import os
 import telegram
 import redis_client as rds
+import logging
+import logging.config
 
 DEFAULT_SEARCH_RADIUS = 100
+
+logging.config.fileConfig('logging.conf')
+log = logging.getLogger('grassroot')
 
 
 def start(update: telegram.Update, ctx: CallbackContext):
@@ -19,19 +24,15 @@ def start(update: telegram.Update, ctx: CallbackContext):
 def process_location(update: telegram.Update, ctx: CallbackContext):
     message: telegram.Message = update.message
     chat_id = message.chat_id
-    user: telegram.User = message.from_user
     longitude = message.location.latitude
     latitude = message.location.longitude
-    msg = location(chat_id, user, longitude, latitude)
+    msg = location(chat_id, longitude, latitude)
     return message.reply_text(msg)
 
 
-def location(chat_id, user, longitude, latitude):
-    print(
-        "process_location: user={} chat_id={} latitude={} longitude={}".format(
-            user, chat_id, latitude, longitude
-        )
-    )
+def location(chat_id, longitude, latitude):
+    log.info("[id=%d] location(chat_id=%d longitude=%f latitude=%f)",
+             chat_id, chat_id, longitude, latitude)
     cmd_res = rds.set_location(chat_id, longitude, latitude)
     if cmd_res < 0:
         return "Error while saving location! Sorry.."
@@ -62,10 +63,12 @@ def list_groups(chat_id, radius):
         return "Error: cannot find your current location. Could you, please, send it again.."
     longitude = loc[0]
     latitude = loc[1]
-    groups_in_radius = rds.search_groups_within_radius(longitude, latitude, radius)
+    groups_in_radius = rds.search_groups_within_radius(
+        chat_id, longitude, latitude, radius)
     if groups_in_radius == 0:
         return "Error while searching groups! Sorry.."
-    print("groups in radius {} : {}".format(radius, groups_in_radius))
+    log.info("[id=%d] list_groups(chat_id=%d radius=%s) => groups in radius: %s",
+             chat_id, chat_id, radius, groups_in_radius)
     list_groups_str = (
         "Groups within your location radius ({}m):\n\nname,distance,description".format(
             radius
@@ -74,7 +77,7 @@ def list_groups(chat_id, radius):
     for g in groups_in_radius:
         radius = g[1]
         group_name = g[0]
-        group_desc = rds.get_description(group_name)
+        group_desc = rds.get_description(chat_id, group_name)
         list_groups_str = "{}\n{},{},{}".format(
             list_groups_str, group_name, radius, group_desc
         )
@@ -93,27 +96,30 @@ def process_link_group(update: telegram.Update, ctx: CallbackContext):
     args_len = len(args)
     group = args[0]
     description = ""
-
-    msg = link_group(group, description)
-    return message.reply_text(msg)
-
-
-def link_group(group, description):
     if args_len > 1:
         for i in range(1, args_len):
             description = "{} {}".format(description, args[i])
+    msg = link_group(admin_id, group, description)
+    return message.reply_text(msg)
+
+
+def link_group(chat_id, group, description):
     description = description.replace(" ", "%")
-    location = rds.get_location(admin_id)
+    location = rds.get_location(chat_id)
     if len(location) < 2:
         return "Error: group {} not found".format(group)
     longitude = location[0]
     latitude = location[1]
-    link_res = rds.link_group(group, description, admin_id, longitude, latitude)
+    log.info('[id=%d] link_group(chat_id=%d group=%s description=%s) longitude=%s latitude=%s',
+             chat_id, chat_id, group, description, longitude, latitude)
+    link_res = rds.link_group(
+        group, description, chat_id, longitude, latitude
+    )
     if link_res < 0:
         return "Error while creating group!"
     if link_res == 0:
         return "Group {} is already exists!".format(group)
-    return "You have linked the group `{}` to the location: longitude={} latitude={}".format(
+    return "#link You have linked the group `{}` to the location: longitude={} latitude={}".format(
         group, longitude, latitude
     )
 
@@ -122,17 +128,21 @@ def join_group(update: telegram.Update, ctx: CallbackContext):
     args = ctx.args
     message: telegram.Message = update.message
     user: telegram.User = message.from_user
+    chat_id = user.id
     username = user.username
     group = args[0]
-    admins_ids = rds.get_admins_ids_by(group)
-    for admin_id in admins_ids:
-        print("Sending join notification of {} to {}".format(username, admin_id))
+    admins_ids = rds.get_admins_ids_by(chat_id, group)
+    for chat_id in admins_ids:
+        log.info("[id=%s] join_group: chat_id=%s group=%s sending join notification of %s",
+                 chat_id, chat_id, group, username)
         message.bot.send_message(
-            chat_id=int(admin_id),
-            text="User @{} wants to join group `{}`".format(username, group),
+            chat_id=int(chat_id),
+            text="#join User @{} wants to join group `{}`".format(
+                username, group),
         )
     return message.reply_text(
-        "We have notified admins of group `{}`. They will add you soon.".format(group)
+        "We have notified admins of group `{}`. They will add you soon.".format(
+            group)
     )
 
 
@@ -147,7 +157,6 @@ def join_group(update: telegram.Update, ctx: CallbackContext):
 # access_token = args[2]
 # check_token
 # txt = 'add yet another admin={} to group={}'.format(new_admin, group)
-# print(txt)
 # rds.add_admin(group, new_admin)
 
 # required token
@@ -175,7 +184,9 @@ def delete_group_link(update: telegram.Update, ctx: CallbackContext):
         return message.reply_text(
             "Problems with deleting group={} from cache".format(group_name)
         )
-    return message.reply_text("Group={} is deleted.".format(group_name))
+    return message.reply_text(
+        "#delete_link Group={} is deleted.".format(group_name)
+    )
 
 
 def main():
@@ -187,7 +198,8 @@ def main():
     dp.add_handler(CommandHandler("list", process_list_groups, pass_args=True))
     dp.add_handler(CommandHandler("link", process_link_group, pass_args=True))
     dp.add_handler(CommandHandler("join", join_group, pass_args=True))
-    dp.add_handler(CommandHandler("delete_link", delete_group_link, pass_args=True))
+    dp.add_handler(CommandHandler(
+        "delete_link", delete_group_link, pass_args=True))
     # TODO: event loop it to process a lot of requests
     updater.start_polling()
     updater.idle()
