@@ -1,3 +1,4 @@
+PyYAML
 jedi-language-server
 python-telegram-bot
 redis
