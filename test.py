@@ -6,7 +6,14 @@ from telegram.ext import (
     MessageHandler,
     Filters,
 )
-from main import process_location, location, process_list_groups, list_groups
+from main import (
+    process_location,
+    location,
+    process_list_groups,
+    list_groups,
+    link_group,
+    delete_group_link,
+)
 
 # Location
 
@@ -70,8 +77,7 @@ def test_process_negative(mocker):
 
 
 def test_list_groups(mocker):
-    mocker.patch("redis_client.get_location",
-                 return_value=[56.311527, 38.135115])
+    mocker.patch("redis_client.get_location", return_value=[56.311527, 38.135115])
     mocker.patch(
         "redis_client.search_groups_within_radius",
         return_value=[[100, "group1"], [200, "group2"]],
@@ -107,9 +113,7 @@ def test_list_when_groups_get_location_0(mocker):
 
 
 def test_list_when_groups_search_groups_within_radius_0(mocker):
-    mocker.patch(
-        "redis_client.get_location", return_value=[56.311527, 38.135115]
-    )
+    mocker.patch("redis_client.get_location", return_value=[56.311527, 38.135115])
     mocker.patch(
         "redis_client.search_groups_within_radius",
         return_value=0,
@@ -128,24 +132,92 @@ def test_list_when_groups_search_groups_within_radius_0(mocker):
 
 # Link group
 
+
 def test_link_group(mocker):
-    mocker.patch("redis_client.get_location",
-                 return_value=[56.311527, 38.135115])
+    mocker.patch("redis_client.get_location", return_value=[56.311527, 38.135115])
     mocker.patch("redis_client.link_group", return_value=1)
+
+    chat_id = 123
+    group = "test_group"
+    description = "desc"
+
+    resp = link_group(chat_id, group, description)
+    print("test_link_group => {}".format(resp))
+    assert not resp.__contains__("Error")
+    assert resp.__contains__("linked")
 
 
 def test_link_group_when_no_location_found(mocker):
-    mocker.patch("redis_client.get_location", return_value=None)
+    mocker.patch("redis_client.get_location", return_value=[])
     mocker.patch("redis_client.link_group", return_value=1)
+
+    chat_id = 123
+    group = "test_group"
+    description = "desc"
+
+    resp = link_group(chat_id, group, description)
+    print("\ntest_link_group_when_no_location_found => {}".format(resp))
+    assert resp.__contains__("Error")
 
 
 def test_link_group_when_error_has_occured(mocker):
-    mocker.patch("redis_client.get_location",
-                 return_value=[56.311527, 38.135115])
+    mocker.patch("redis_client.get_location", return_value=[56.311527, 38.135115])
     mocker.patch("redis_client.link_group", return_value=-1)
+
+    chat_id = 123
+    group = "test_group"
+    description = "desc"
+
+    resp = link_group(chat_id, group, description)
+    print("\ntest_link_group_when_error_has_occured => {}".format(resp))
+    assert resp.__contains__("Error while creating")
 
 
 def test_link_group_when_group_already_exists(mocker):
-    mocker.patch("redis_client.get_location",
-                 return_value=[56.311527, 38.135115])
+    mocker.patch("redis_client.get_location", return_value=[56.311527, 38.135115])
     mocker.patch("redis_client.link_group", return_value=0)
+
+    chat_id = 123
+    group = "test_group"
+    description = "desc"
+
+    resp = link_group(chat_id, group, description)
+    print("\ntest_link_group_when_group_already_exists => {}".format(resp))
+    assert resp.__contains__("already exists")
+
+
+# Delete group link
+
+
+def test_delete_group_link_when_group_exists(mocker):
+    mocker.patch("redis_client.delete_group_link", return_value=1)
+
+    admin_id = 123
+    group_name = "test_group"
+
+    resp = delete_group_link(admin_id, group_name)
+    print("\ntest_delete_group_link_when_group_exists => {}".format(resp))
+    assert not resp.__contains__("Error")
+    assert resp.__contains__("deleted")
+
+
+def test_delete_group_link_when_group_is_not_exists(mocker):
+    mocker.patch("redis_client.delete_group_link", return_value=0)
+
+    admin_id = 123
+    group_name = "test_group"
+
+    resp = delete_group_link(admin_id, group_name)
+    print("\ntest_delete_group_link_when_group_is_not_exists => {}".format(resp))
+    assert resp.__contains__("Error")
+
+
+def test_delete_group_link_when_error(mocker):
+    mocker.patch("redis_client.delete_group_link", return_value=-1)
+
+    admin_id = 123
+    group_name = "test_group"
+
+    resp = delete_group_link(admin_id, group_name)
+    print("\ntest_delete_group_link_when_error => {}".format(resp))
+    assert resp.__contains__("Error")
