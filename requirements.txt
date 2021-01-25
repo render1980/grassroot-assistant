@@ -4,3 +4,5 @@ redis
 black
 pytest
 pytest-mock
+python-coveralls
+pytest-cov

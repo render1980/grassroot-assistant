@@ -4,4 +4,6 @@ python:
 install:
   - pip install -r requirements.txt
 script:
-  - pytest -s test.py
+  - pytest test.py --doctest-modules -v --cov=. --cov-report=term-missing
+after_success:
+  - coveralls
