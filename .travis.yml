@@ -9,4 +9,4 @@ script:
   - pytest test.py --doctest-modules -v --cov=.
   - coverage run --source=. test.py test
 after_success:
-  - coveralls --service=github
+  - coveralls
