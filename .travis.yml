@@ -3,6 +3,8 @@ python:
   - "3.7"
 install:
   - pip install -r requirements.txt
+env:
+  - COVERALLS_REPO_TOKEN=VgsayYJNvIxQLAi23mC4nJstHkj2fAvzs
 script:
   - pytest test.py --doctest-modules -v --cov=.
   - coverage run --source=. test.py test
