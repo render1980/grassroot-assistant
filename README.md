@@ -6,7 +6,7 @@
 
 Bot which helps to communicate with others nearby over Telegram.
 
-How it works: https://render1980.github.io/projects/grassrootassistant.html
+[How it works](https://render1980.github.io/projects/grassrootassistant.html)
 
 ## Requirements
 
@@ -39,13 +39,7 @@ python setup.py sdist
 
 ## Telegram Bot Commands
 
-```
-/start - start communicating with Bot
-/list {radius} - list groups within your location radius (meters). 100m by default.
-/link {group} {description} - link a group to your location
-/join {group} - request to join the group
-/delete_link {group} - delete the link for Bot
-```
+You can find commands [here](https://github.com/render1980/grassroot-assistant/wiki/Bot-Commands)
 
 ## Environment Variables
 
