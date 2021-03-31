@@ -7,9 +7,9 @@ from telegram.ext import (
 )
 import os
 import telegram
-import redis_client as rds
 import logging
 import logging.config
+import redis_client as rds
 
 DEFAULT_SEARCH_RADIUS = 100
 
