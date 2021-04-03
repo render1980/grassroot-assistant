@@ -5,7 +5,7 @@ create table if not exists grassroot.groups (
     id serial PRIMARY KEY,
     group_name varchar(256) NOT NULL,
     description text,
-    creator_id bigint NOT NULL,
+    admin_id bigint NOT NULL,
     longitude double precision NOT NULL,
     latitude double precision NOT NULL,
     creation_date timestamp NOT NULL,

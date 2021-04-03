@@ -10,6 +10,9 @@ import telegram
 import logging
 import logging.config
 import redis_client as rds
+import db_client as db
+import threading
+
 
 DEFAULT_SEARCH_RADIUS = 100
 
@@ -116,7 +119,6 @@ def process_link_group(update: telegram.Update, ctx: CallbackContext):
 
 
 def link_group(chat_id, group, description):
-    description = description.replace(" ", "%")
     location = rds.get_location(chat_id)
     if len(location) < 2 or location is None:
         return "Error: group {} not found".format(group)
@@ -132,6 +134,7 @@ def link_group(chat_id, group, description):
         latitude,
     )
     link_res = rds.link_group(group, description, chat_id, longitude, latitude)
+    # TODO: async call db.link_group(group, description, chat_id, longitude, latitude)
     if link_res < 0:
         return "Error while creating group!"
     if link_res == 0:
@@ -212,6 +215,7 @@ def delete_group_link(admin_id, group_name):
 
 
 def main():
+    log.info("Grassroot-assistant is started")
     bot_token = os.getenv("BOT_TOKEN")
     updater = Updater(bot_token)
     dp = updater.dispatcher
@@ -228,5 +232,26 @@ def main():
     updater.idle()
 
 
+def cache_geos():
+    log.info("Started updating geo indexes")
+    if not rds.is_synced():
+        groups_info = db.get_groups_info()
+        x = threading.Thread(target=update_cache_geo, args=(groups_info,))
+        x.start()
+
+
+def update_cache_geo(groups_info):
+    for group in groups_info:
+        res = rds.link_group(
+            group["group_name"],
+            group["description"],
+            group["admin_id"],
+            group["longitude"],
+            group["latitude"],
+        )
+    rds.set_synced()
+
+
 if __name__ == "__main__":
-    main()
+    cache_geos()
+    # main()

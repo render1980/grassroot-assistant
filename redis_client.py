@@ -8,6 +8,7 @@ redis_client: redis.Redis = redis.Redis(
 CHAT_LOCATION_KEY = "location"
 GEOS_KEY = "geos"
 DESCRIPTION_KEY = "desc"
+SYNC_KEY = "sync"
 
 logging.config.fileConfig('logging.conf')
 log = logging.getLogger('grassroot')
@@ -35,13 +36,16 @@ def get_location(chat_id):
 
 # `GEOADD geos 56.304558 38.135395 "group_name:description of the group_name"`
 def link_group(group_name, desc, admin_id, longitude, latitude):
+    desc = desc.replace(" ", "%")
     geoadd_res = execute_redis_cmd(admin_id, 'GEOADD {} {} {} {}'.format(
         GEOS_KEY, longitude, latitude, group_name))
     if geoadd_res < 1:
         return geoadd_res
     set_group_description(admin_id, group_name, desc)
-    log.info('[id=%d] successfully created group=%s admin_id=%d longitude=%f latitude=%f'.format(
-        admin_id, group_name, admin_id, longitude, latitude))
+    log.info(
+        '[id=%d] successfully created group=%s admin_id=%d longitude=%f latitude=%f',
+        admin_id, group_name, admin_id, longitude, latitude
+    )
     return add_admin(admin_id, group_name)
 
 
@@ -82,6 +86,16 @@ def set_group_description(admin_id, group_name, desc):
 
 def get_description(admin_id, group_name):
     return execute_redis_cmd(admin_id, 'HGET {} {}'.format(DESCRIPTION_KEY, group_name))
+
+
+def set_synced():
+    """ Set fact that we have already synchronized data between DB and cache """
+    return execute_redis_cmd(0, 'SET {} {}'.format(SYNC_KEY, '1'))
+
+
+def is_synced():
+    """ Check if data between DB and cache is synced """
+    return execute_redis_cmd(0, 'GET {}'.format(SYNC_KEY)) == '1'
 
 
 def execute_redis_cmd(admin_id, cmd):
