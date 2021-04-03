@@ -8,7 +8,8 @@ create table if not exists grassroot.groups (
     creator_id bigint NOT NULL,
     longitude double precision NOT NULL,
     latitude double precision NOT NULL,
-    creation_date timestamp NOT NULL
+    creation_date timestamp NOT NULL,
+    UNIQUE(group_name)
 );
 
 create table if not exists grassroot.group_admins (
