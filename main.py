@@ -61,26 +61,26 @@ def process_list_groups(update: telegram.Update, ctx: CallbackContext):
         radius = DEFAULT_SEARCH_RADIUS
     else:
         radius = args[0]
-    resp = list_groups(chat_id=chat_id, radius=radius)
+    resp = list_groups(admin_id=chat_id, radius=radius)
     return message.reply_text(resp)
 
 
-def list_groups(chat_id, radius):
+def list_groups(admin_id, radius):
     """ radius - radius to search groups """
-    loc = rds.get_location(chat_id)
+    loc = rds.get_location(admin_id)
     if loc == 0:
         return "Error: cannot find your current location. Could you, please, send it again.."
     longitude = loc[0]
     latitude = loc[1]
     groups_in_radius = rds.search_groups_within_radius(
-        chat_id, longitude, latitude, radius
+        admin_id, longitude, latitude, radius
     )
     if groups_in_radius == 0:
         return "Error while searching groups! Sorry.."
     log.info(
         "[id=%d] list_groups(chat_id=%d radius=%s) => groups in radius: %s",
-        chat_id,
-        chat_id,
+        admin_id,
+        admin_id,
         radius,
         groups_in_radius,
     )
@@ -92,7 +92,7 @@ def list_groups(chat_id, radius):
     for g in groups_in_radius:
         radius = g[1]
         group_name = g[0]
-        group_desc = rds.get_description(chat_id, group_name)
+        group_desc = db.get_description(admin_id, group_name)
         list_groups_str = "{}\n{},{},{}".format(
             list_groups_str, group_name, radius, group_desc
         )
@@ -133,6 +133,17 @@ def link_group(chat_id, group, description):
         longitude,
         latitude,
     )
+    t = threading.Thread(
+        target=db.link_group,
+        args=(
+            group_name,
+            description,
+            admin_id,
+            longitude,
+            latitude,
+        ),
+    )
+    t.start()
     link_res = rds.link_group(group, description, chat_id, longitude, latitude)
     # TODO: async call db.link_group(group, description, chat_id, longitude, latitude)
     if link_res < 0:
@@ -151,7 +162,7 @@ def process_join_group(update: telegram.Update, ctx: CallbackContext):
     chat_id = user.id
     username = user.username
     group = args[0]
-    admins_ids = rds.get_admins_ids_by(chat_id, group)
+    admins_ids = db.get_admins_ids_by(chat_id, group)
     for chat_id in admins_ids:
         log.info(
             "[id=%s] join_group: chat_id=%s group=%s sending join notification of %s",
@@ -208,6 +219,14 @@ def process_delete_group_link(update: telegram.Update, ctx: CallbackContext):
 
 
 def delete_group_link(admin_id, group_name):
+    t = threading.Thread(
+        target=db.delete_group_link,
+        args=(
+            group_name,
+            admin_id,
+        ),
+    )
+    t.start()
     rds_del_res = rds.delete_group_link(group_name, admin_id)
     if rds_del_res < 1:
         return "Error: problems with deleting group={} from cache".format(group_name)
@@ -236,8 +255,8 @@ def cache_geos():
     log.info("Started updating geo indexes")
     if not rds.is_synced():
         groups_info = db.get_groups_info()
-        x = threading.Thread(target=update_cache_geo, args=(groups_info,))
-        x.start()
+        t = threading.Thread(target=update_cache_geo, args=(groups_info,))
+        t.start()
 
 
 def update_cache_geo(groups_info):

@@ -87,4 +87,5 @@ def get_groups_info():
     cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
     cur.execute("SELECT group_name,description,admin_id,longitude,latitude FROM grassroot.groups")
     groups_data = cur.fetchall()
+    cur.close()
     return groups_data
