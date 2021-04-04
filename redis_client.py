@@ -43,7 +43,7 @@ def link_group(group_name, desc, admin_id, longitude, latitude):
         return geoadd_res
     set_group_description(admin_id, group_name, desc)
     log.info(
-        '[id=%d] successfully created group=%s admin_id=%d longitude=%f latitude=%f',
+        '[id=%d] successfully created group=%s admin_id=%d longitude=%s latitude=%s',
         admin_id, group_name, admin_id, longitude, latitude
     )
     return add_admin(admin_id, group_name)

@@ -17,7 +17,7 @@ conn = pg.connect("dbname={} user={} password={} host=0.0.0.0".format(postgres_d
 
 def link_group(group_name, desc, admin_id, longitude, latitude):
     log.info(
-        "[id=%d] saving group=%s longitude=%f latitude=%f -> DB",
+        "[id=%d] saving group=%s longitude=%s latitude=%s -> DB",
         admin_id, group_name, longitude, latitude
     )
     cur = conn.cursor()

@@ -166,13 +166,13 @@ def process_join_group(update: telegram.Update, ctx: CallbackContext):
     for chat_id in admins_ids:
         log.info(
             "[id=%s] join_group: chat_id=%s group=%s sending join notification of %s",
-            chat_id,
-            chat_id,
+            chat_id[0],
+            chat_id[0],
             group,
             username,
         )
         message.bot.send_message(
-            chat_id=int(chat_id),
+            chat_id=int(chat_id[0]),
             text="#join User @{} wants to join group `{}`".format(username, group),
         )
     return message.reply_text(
