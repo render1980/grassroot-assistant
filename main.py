@@ -92,7 +92,7 @@ def list_groups(admin_id, radius):
     for g in groups_in_radius:
         radius = g[1]
         group_name = g[0]
-        group_desc = db.get_description(admin_id, group_name)
+        group_desc = db.get_description(admin_id, group_name)[0]
         list_groups_str = "{}\n{},{},{}".format(
             list_groups_str, group_name, radius, group_desc
         )
@@ -136,9 +136,9 @@ def link_group(chat_id, group, description):
     t = threading.Thread(
         target=db.link_group,
         args=(
-            group_name,
+            group,
             description,
-            admin_id,
+            chat_id,
             longitude,
             latitude,
         ),
@@ -273,4 +273,4 @@ def update_cache_geo(groups_info):
 
 if __name__ == "__main__":
     cache_geos()
-    # main()
+    main()

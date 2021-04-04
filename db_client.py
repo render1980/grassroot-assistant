@@ -44,7 +44,7 @@ def delete_group_link(group_name, admin_id):
     cur.execute("SELECT group_id FROM grassroot.group_admins WHERE admin_id = %s AND group_name = %s", (admin_id, group_name))
 
     select_res = cur.fetchone()
-    group_id = select_res[1]
+    group_id = select_res[0]
 
     cur.execute("DELETE FROM grassroot.groups WHERE id = %s", (group_id,))
     cur.execute("DELETE FROM grassroot.group_admins WHERE group_id = %s", (group_id,))
