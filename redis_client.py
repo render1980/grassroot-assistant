@@ -1,9 +1,14 @@
 import redis
 import logging
 import logging.config
+import os
+
+redis_host = os.getenv('REDIS_HOST', 'localhost')
+redis_port = os.getenv('REDIS_PORT', '6379')
+redis_db = os.getenv('REDIS_DB', 0)
 
 redis_client: redis.Redis = redis.Redis(
-    host='localhost', port=6379, db=0, decode_responses=True)
+    host=redis_host, port=redis_port, db=redis_db, decode_responses=True)
 
 CHAT_LOCATION_KEY = "location"
 GEOS_KEY = "geos"
