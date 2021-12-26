@@ -68,7 +68,7 @@ def process_list_groups(update: telegram.Update, ctx: CallbackContext):
 def list_groups(admin_id, radius):
     """ radius - radius to search groups """
     loc = rds.get_location(admin_id)
-    if loc == 0:
+    if (not loc):
         return "Error: cannot find your current location. Could you, please, send it again.."
     longitude = loc[0]
     latitude = loc[1]
