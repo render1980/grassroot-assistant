@@ -2,9 +2,19 @@ import redis
 import logging
 import logging.config
 import os
+import urllib.parse as urlparse
 
-redis_host = os.getenv('REDIS_HOST', 'localhost')
-redis_port = os.getenv('REDIS_PORT', '6379')
+# parse url as a heroku env var
+redis_url = os.getenv('REDIS_URL')
+if (redis_url):
+    url = urlparse.urlparse(redis_url)
+    redis_host = url.hostname
+    redis_port = url.port
+if (not redis_host):
+    redis_host = os.getenv('REDIS_HOST', 'localhost')
+if (not redis_port):
+    redis_port = os.getenv('REDIS_PORT', '6379')
+
 redis_db = os.getenv('REDIS_DB', 0)
 
 redis_client: redis.Redis = redis.Redis(

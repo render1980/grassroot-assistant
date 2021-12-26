@@ -3,16 +3,27 @@ import psycopg2.extras
 import os
 import logging
 import logging.config
+import urllib.parse as urlparse
 
 
 logging.config.fileConfig("logging.conf")
 log = logging.getLogger("grassroot")
 
+# parse url as a heroku env var
+db_url = os.getenv('DATABASE_URL')
+if (db_url):
+    url = urlparse.urlparse(db_url)
+    host = url.hostname
+    port = url.port
+if (not host):
+    host = os.getenv('POSTGRES_HOST', '0.0.0.0')
+if (not port):
+    port = os.getenv('POSTGRES_PORT', 5432)
 
 postgres_db = os.getenv('POSTGRES_DB', 'postgres')
 postgres_user = os.getenv('POSTGRES_USER', 'postgres')
 postgres_password = os.getenv('POSTGRES_PASSWORD', 'postgres')
-conn = pg.connect("dbname={} user={} password={} host=0.0.0.0".format(postgres_db, postgres_user, postgres_password))
+conn = pg.connect("dbname={} user={} password={} host={} port={}".format(postgres_db, postgres_user, postgres_password, host, port))
 
 
 def link_group(group_name, desc, admin_id, longitude, latitude):
