@@ -7,18 +7,14 @@ import urllib.parse as urlparse
 # parse url as a heroku env var
 redis_url = os.getenv('REDIS_URL')
 if (redis_url):
-    url = urlparse.urlparse(redis_url)
-    redis_host = url.hostname
-    redis_port = url.port
-if (not redis_host):
+    redis_client: redis.Redis = redis.from_url(redis_url)
+else:
     redis_host = os.getenv('REDIS_HOST', 'localhost')
-if (not redis_port):
     redis_port = os.getenv('REDIS_PORT', '6379')
-
-redis_db = os.getenv('REDIS_DB', 0)
-
-redis_client: redis.Redis = redis.Redis(
-    host=redis_host, port=redis_port, db=redis_db, decode_responses=True)
+    redis_db = os.getenv('REDIS_DB', 0)
+    redis_client: redis.Redis = redis.Redis(
+        host=redis_host, port=redis_port, db=redis_db, decode_responses=True
+    )
 
 CHAT_LOCATION_KEY = "location"
 GEOS_KEY = "geos"
