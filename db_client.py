@@ -10,6 +10,7 @@ logging.config.fileConfig("logging.conf")
 log = logging.getLogger("grassroot")
 
 # parse url as a heroku env var
+host = ''
 db_url = os.getenv('DATABASE_URL')
 if (db_url):
     url = urlparse.urlparse(db_url)
@@ -18,16 +19,13 @@ if (db_url):
     postgres_db = url.path[1:]
     postgres_user = url.username
     postgres_password = url.password
-if (not host):
+else:
     host = os.getenv('POSTGRES_HOST', '0.0.0.0')
-if (not port):
     port = os.getenv('POSTGRES_PORT', 5432)
-if (not postgres_db):
     postgres_db = os.getenv('POSTGRES_DB', 'postgres')
-if (not postgres_user):
     postgres_user = os.getenv('POSTGRES_USER', 'postgres')
-if (not postgres_password):
     postgres_password = os.getenv('POSTGRES_PASSWORD', 'postgres')
+
 conn = pg.connect("dbname={} user={} password={} host={} port={}".format(
     postgres_db, postgres_user, postgres_password, host, port))
 
